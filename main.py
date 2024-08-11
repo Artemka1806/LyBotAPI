@@ -17,6 +17,7 @@ GOOGLE_REDIRECT_URI = getenv("GOOGLE_REDIRECT_URI")
 app = FastAPI()
 
 
+@app.head("/")
 @app.get("/")
 async def index():
 	"""
