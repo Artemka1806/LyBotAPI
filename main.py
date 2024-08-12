@@ -29,6 +29,7 @@ instance.set_db(db)
 app = FastAPI(docs_url=None, redoc_url=None)
 
 
+@app.head("/")
 @app.get("/")
 async def index():
 	"""
