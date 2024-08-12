@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from motor.motor_asyncio import AsyncIOMotorClient
+from marshmallow.exceptions import ValidationError
 from pymongo.errors import DuplicateKeyError
 
 from models.common import instance
@@ -87,7 +88,7 @@ async def auth(code: str):
 						avatar_url=data["picture"]
 					)
 					await user.commit()
-				except DuplicateKeyError:
+				except (DuplicateKeyError, ValidationError):
 					return {"text": "Користувач з такою поштою вже зареєстрований"}
 				base_url = TG_BOT_URL + "?"
 				params = {
