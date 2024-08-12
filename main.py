@@ -82,7 +82,7 @@ async def auth(code: str):
 					await User.ensure_indexes()
 					user = User(
 						given_name=data["given_name"],
-						family_name=data["given_name"],
+						family_name=data["family_name"],
 						email=data["email"],
 						avatar_url=data["picture"]
 					)
