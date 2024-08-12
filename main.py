@@ -6,6 +6,10 @@ import aiohttp
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
+from motor.motor_asyncio import AsyncIOMotorClient
+
+from models.common import instance
+from models.user import User
 
 load_dotenv()
 
@@ -14,7 +18,14 @@ GOOGLE_CLIENT_ID = getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = getenv("GOOGLE_REDIRECT_URI")
 
-app = FastAPI()
+TG_BOT_URL=getenv("TG_BOT_URL")
+MONGO_URI = getenv("MONGO_URI")
+
+client = AsyncIOMotorClient(MONGO_URI)
+db = client.data
+instance.set_db(db)
+
+app = FastAPI(docs_url=None, redoc_url=None)
 
 
 @app.get("/")
@@ -63,5 +74,18 @@ async def auth(code: str):
 				"access_token": data["access_token"]
 			}
 			async with session.get("https://www.googleapis.com/oauth2/v2/userinfo?" + parse.urlencode(params)) as response:
-				# TODO: write user data in database and redirect user to telegram bot with  special token in url
-				return await response.json()
+				data = await response.json()
+				user = User(
+					given_name=data["given_name"],
+					family_name=data["given_name"],
+					email=data["email"],
+					avatar_url=data["picture"]
+				)
+				await user.commit()
+				base_url = TG_BOT_URL + "?"
+				params = {
+					"start": str(user.id),
+				}
+				url = base_url + parse.urlencode(params)
+				print(url)
+				return RedirectResponse(url)
