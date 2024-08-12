@@ -12,7 +12,7 @@ class User(Document):
 	username = fields.StringField(max_length=32)
 	given_name = fields.StringField()
 	family_name = fields.StringField()
-	email = fields.EmailField(required=True)
+	email = fields.EmailField(required=True, unique=True)
 	avatar_url = fields.StringField()
 	group = fields.StringField(max_length=4)
 	role = fields.IntField(default=0)

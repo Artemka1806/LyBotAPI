@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo.errors import DuplicateKeyError
 
 from models.common import instance
 from models.user import User
@@ -74,18 +75,22 @@ async def auth(code: str):
 				"access_token": data["access_token"]
 			}
 			async with session.get("https://www.googleapis.com/oauth2/v2/userinfo?" + parse.urlencode(params)) as response:
-				data = await response.json()
-				user = User(
-					given_name=data["given_name"],
-					family_name=data["given_name"],
-					email=data["email"],
-					avatar_url=data["picture"]
-				)
-				await user.commit()
+				user = None
+				try:
+					data = await response.json()
+					await User.ensure_indexes()
+					user = User(
+						given_name=data["given_name"],
+						family_name=data["given_name"],
+						email=data["email"],
+						avatar_url=data["picture"]
+					)
+					await user.commit()
+				except DuplicateKeyError:
+					return {"text": "Користувач з такою поштою вже зареєстрований"}
 				base_url = TG_BOT_URL + "?"
 				params = {
 					"start": str(user.id),
 				}
 				url = base_url + parse.urlencode(params)
-				print(url)
 				return RedirectResponse(url)
