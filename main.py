@@ -1,7 +1,6 @@
 from os import getenv
 # To create query parameters correctly
 from urllib import parse
-from typing import Optional
 import re
 
 import aiohttp
@@ -110,13 +109,13 @@ async def auth(code: str):
 
 
 @app.get("/attendance")
-async def get_attendance(timestamp: Optional[float] = None):
+async def get_attendance(timestamp: float = 0.0):
 	data = []
 	for doc in await User.find().to_list(length=None):
 		d = doc.to_mongo()
-		del d["_id"]
 		data.append(d)
 
+	data = sorted(data, key=lambda x: x['family_name'])
 	result = {}
 
 	for entry in data:
@@ -141,8 +140,9 @@ async def get_attendance(timestamp: Optional[float] = None):
 		# Створюємо об'єкт для кожного учня
 		result[class_num][subgroup][full_name] = {
 			"name": full_name,
-			"status": entry.get("status", 0),
-			"message": ""
+			"avatar_url": entry.get("avatar_url", ""),
+			"status": entry.get("status", 3),
+			"message": entry.get("status_message", "")
 		}
 
 	# Функція для сортування підгруп за числовою та алфавітною частинами
