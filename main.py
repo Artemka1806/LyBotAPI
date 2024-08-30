@@ -109,7 +109,7 @@ async def auth(code: str):
 
 
 @app.get("/attendance")
-async def get_attendance(timestamp: float = 0.0):
+async def get_attendance(timestamp: float = -1.0):
 	data = []
 	for doc in await User.find({"status_updated_at": {"$gt": timestamp}}).to_list(length=None):
 		d = doc.to_mongo()
