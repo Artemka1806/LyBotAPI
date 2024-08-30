@@ -1,6 +1,8 @@
 from os import getenv
 # To create query parameters correctly
 from urllib import parse
+from typing import Optional
+import re
 
 import aiohttp
 from dotenv import load_dotenv
@@ -96,3 +98,52 @@ async def auth(code: str):
 				}
 				url = base_url + parse.urlencode(params)
 				return RedirectResponse(url)
+
+
+@app.get("/attendance")
+async def get_attendance(timestamp: Optional[float] = None):
+	data = []
+	for doc in await User.find().to_list(length=None):
+		d = doc.to_mongo()
+		del d["_id"]
+		data.append(d)
+
+	result = {}
+
+	for entry in data:
+		# Отримуємо групу та клас
+		group = entry.get("group")
+		if group is None:
+			continue  # Пропускаємо, якщо немає групи
+
+		# Визначаємо клас (перша частина групи) та підгрупу (група з буквою)
+		class_num = group.split('-')[0]
+		subgroup = group
+
+		# Створюємо вкладені словники для класів та груп, якщо вони не існують
+		if class_num not in result:
+			result[class_num] = {}
+		if subgroup not in result[class_num]:
+			result[class_num][subgroup] = {}
+
+		# Формуємо ім'я учня
+		full_name = f"{entry['family_name']} {entry['given_name']}"
+
+		# Створюємо об'єкт для кожного учня
+		result[class_num][subgroup][full_name] = {
+			"name": full_name,
+			"status": entry.get("status", 0),
+			"message": ""
+		}
+
+	# Функція для сортування підгруп за числовою та алфавітною частинами
+	def sort_key(subgroup):
+		match = re.match(r"(\d+)-([А-Яа-я])", subgroup)
+		if match:
+			return (int(match.group(1)), match.group(2))
+		return (0, subgroup)
+
+	# Сортування класів та підгруп
+	sorted_result = {class_num: dict(sorted(result[class_num].items(), key=lambda x: sort_key(x[0])))
+		for class_num in sorted(result.keys(), key=int)}
+	return sorted_result
