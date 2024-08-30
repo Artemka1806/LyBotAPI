@@ -111,7 +111,7 @@ async def auth(code: str):
 @app.get("/attendance")
 async def get_attendance(timestamp: float = 0.0):
 	data = []
-	for doc in await User.find().to_list(length=None):
+	for doc in await User.find({"status_updated_at": {"$gt": timestamp}}).to_list(length=None):
 		d = doc.to_mongo()
 		data.append(d)
 
@@ -141,6 +141,7 @@ async def get_attendance(timestamp: float = 0.0):
 		result[class_num][subgroup][full_name] = {
 			"name": full_name,
 			"avatar_url": entry.get("avatar_url", ""),
+			"status_updated_at": entry.get("status_updated_at"),
 			"status": entry.get("status", 3),
 			"message": entry.get("status_message", "")
 		}
