@@ -7,6 +7,7 @@ import re
 import aiohttp
 from dotenv import load_dotenv
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from motor.motor_asyncio import AsyncIOMotorClient
 from marshmallow.exceptions import ValidationError
@@ -30,6 +31,14 @@ db = client.data
 instance.set_db(db)
 
 app = FastAPI(docs_url=None, redoc_url=None)
+
+app.add_middleware(
+	CORSMiddleware,
+	allow_origins=["*"],  # Allow all origins
+	allow_credentials=True,  # Allow cookies and authentication credentials
+	allow_methods=["*"],  # Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
+	allow_headers=["*"],  # Allow all headers
+)
 
 
 @app.head("/")
