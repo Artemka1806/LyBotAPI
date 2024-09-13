@@ -189,6 +189,6 @@ async def election(name: Annotated[str, Form()], email: Annotated[str, Form()], 
 	}
 	async with aiohttp.ClientSession() as session:
 		async with session.post(url, data=data) as resp:
-			print(resp.text())
+			print(await resp.text())
 
 	return {"message": "OK"}
