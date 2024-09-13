@@ -1,16 +1,17 @@
 from os import getenv
-# To create query parameters correctly
+from typing import Annotated
 from urllib import parse
 import re
 
 import aiohttp
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from motor.motor_asyncio import AsyncIOMotorClient
 from marshmallow.exceptions import ValidationError
 from pymongo.errors import DuplicateKeyError
+from pydantic import BaseModel
 
 from models.common import instance
 from models.user import User
@@ -25,11 +26,14 @@ GOOGLE_REDIRECT_URI = getenv("GOOGLE_REDIRECT_URI")
 TG_BOT_URL = getenv("TG_BOT_URL")
 MONGO_URI = getenv("MONGO_URI")
 
+TG_ELECTION_BOT_TOKEN = getenv("TG_ELECTION_BOT_TOKEN")
+TG_ELECTION_GROUP_ID = getenv("TG_ELECTION_GROUP_ID")
+
 client = AsyncIOMotorClient(MONGO_URI)
 db = client.data
 instance.set_db(db)
 
-app = FastAPI(docs_url=None, redoc_url=None)
+app = FastAPI()
 
 app.add_middleware(
 	CORSMiddleware,
@@ -38,6 +42,12 @@ app.add_middleware(
 	allow_methods=["*"],  # Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
 	allow_headers=["*"],  # Allow all headers
 )
+
+
+class ElectionFormData(BaseModel):
+	name: str
+	email: str
+	question: str
 
 
 @app.head("/")
@@ -157,3 +167,28 @@ async def get_attendance(timestamp: float = -1.0):
 	sorted_result = {class_num: dict(sorted(result[class_num].items(), key=lambda x: sort_key(x[0])))
 		for class_num in sorted(result.keys(), key=int)}
 	return sorted_result
+
+
+@app.post("/election")
+async def election(name: Annotated[str, Form()], email: Annotated[str, Form()], question: Annotated[str, Form()], ):
+	"""
+	KENT!
+	"""
+	url = f"https://api.telegram.org/bot{TG_ELECTION_BOT_TOKEN}/sendMessage"
+
+	MESSAGE = f"""<b>Нове запитання</b>
+
+	Ім'я: {name}
+	Email: {email}
+	Запитання:<blockquote expandable>{question.replace("<", "*").replace(">", "*").replace("/", "*")}</blockquote>"""
+
+	data = {
+		"chat_id": TG_ELECTION_GROUP_ID,
+		"text": MESSAGE,
+		"parse_mode": "HTML"
+	}
+	async with aiohttp.ClientSession() as session:
+		async with session.post(url, data=data) as resp:
+			print(resp.text())
+
+	return {"message": "OK"}
