@@ -5,7 +5,7 @@ import re
 
 import aiohttp
 from dotenv import load_dotenv
-from fastapi import FastAPI, Form
+from fastapi import FastAPI, Form, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -191,4 +191,4 @@ async def election(name: Annotated[str, Form()], email: Annotated[str, Form()], 
 		async with session.post(url, data=data) as resp:
 			print(await resp.text())
 
-	return RedirectResponse(url="https://sashanikitich.github.io/Election/?alert=Успішно+надіслано+Ваше+повідомлення")
+	return RedirectResponse(url="https://sashanikitich.github.io/Election/?alert=Успішно+надіслано+Ваше+повідомлення", status_code=status.HTTP_303_SEE_OTHER)
