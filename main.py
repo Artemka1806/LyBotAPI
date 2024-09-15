@@ -191,4 +191,4 @@ async def election(name: Annotated[str, Form()], email: Annotated[str, Form()], 
 		async with session.post(url, data=data) as resp:
 			print(await resp.text())
 
-	return RedirectResponse(url="https://sashanikitich.github.io/Election/?alert=Успішно+надіслано+Ваше+повідомлення", status_code=status.HTTP_303_SEE_OTHER)
+	return RedirectResponse(url="https://sashanikitich.github.io/Election/#contact", status_code=status.HTTP_303_SEE_OTHER)
