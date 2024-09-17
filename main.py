@@ -109,7 +109,12 @@ async def auth(code: str):
 					)
 					await user.commit()
 				except (DuplicateKeyError, ValidationError):
-					return {"text": "Користувач з такою поштою вже зареєстрований"}
+					user = await User.find_one({"email": data["email"]})
+					user.given_name = data["given_name"]
+					user.family_name = data["family_name"]
+					user.avatar_url = data["picture"]
+					await user.commit()
+					
 				base_url = TG_BOT_URL + "?"
 				params = {
 					"start": str(user.id),
